@@ -38,3 +38,5 @@ Dealt 12 hearts 2000000 times. Aces can be trumped  99.91% of the time. Kings 10
 Dealt 13 hearts 2000000 times. Aces can be trumped 100.00% of the time. Kings 100.00%. Queens 100.00%
 ```
 
+Taking the inverse of the tabular data, we can visualize the expected value as in the below image:
+![Expected Value](spades.png?raw=true "Expected Value")
