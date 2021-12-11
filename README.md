@@ -5,11 +5,11 @@ The [spades.py](spades.py) script in this repo is a simple simulator which answe
 2. Deals N hearts to player 'Me'
 3. Randomly distributes the remaining 13-N hearts to 'Partner', 'West', and 'East'
 4. Randomly shuffles the clubs, spades, and diamonds and deals them to all four players until all cards are dealt and all players have 13 cards in their hands
-5. Then it examines the 'West' and 'East' hands to see if they can trump Me's Ace. 
-    - Me's Ace can be trumped if either opponent has zero hearts and at least one spade.
-6. Then, if Me has at least two hearts, it repeats this for Me's King.
+5. Then it examines the 'West' and 'East' hands to see if they can trump Me's Ace of Hearts. 
+    - It assumes that Me's Ace can be trumped if either opponent has zero hearts and at least one spade.
+6. Then, if Me has at least two hearts, it repeats this for Me's King of Hearts.
     - Me's King can be trumped if either opponent has one or fewer hearts and at least one spade.
-7. Then, if Me has at least three hearts, it repeats this for Me's Queen.
+7. Then, if Me has at least three hearts, it repeats this for Me's Queen of Hearts.
     - Me's Queen can be trumped if either opponent has two or fewer hearts and at least one spade.
 
 Note that it does not take the following into consideration:
