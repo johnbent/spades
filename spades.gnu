@@ -175,6 +175,8 @@ set fit brief errorvariables nocovariancevariables errorscaling prescale nowrap 
 GNUTERM = "qt"
 I = {0.0, 1.0}
 VoxelDistance = 0.0
+trumps = 46102
+iters = 3000000
 ## Last datafile plotted: "spades.dat"
-plot 'spades.dat' using 2:(1-$10/100) t 'Ace of Hearts' ps 2, '' using 2:(1-$16/100) t 'King of Hearts' ps 2, '' using 2:(1-$19/100) t 'Queen of Hearts' ps 2
+plot 'spades.dat' using 2:(1-$8/100) t 'Ace of Hearts' ps 2, '' using 2:(1-$14/100) t 'King of Hearts' ps 2, '' using 2:(1-$17/100) t 'Queen of Hearts' ps 2, '' using 2:(1-$20/100) t 'Jack of Hearts' ps 2
 #    EOF
