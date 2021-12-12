@@ -11,6 +11,9 @@ The [spades.py](spades.py) script in this repo is a simple simulator which answe
     - Me's King can be trumped if either opponent has one or fewer hearts and at least one spade.
 7. Then, if Me has at least three hearts, it repeats this for Me's Queen of Hearts.
     - Me's Queen can be trumped if either opponent has two or fewer hearts and at least one spade.
+8. Then, if Me has at least four hearts, it repeats this for Me's Jack of Hearts.
+    - Me's Jack can be trumped if either opponent has three or fewer hearts and at least one spade.
+    - A potentially easier way to think of this is that a Jack will not be trumped by an opponent if that opponent has either four hearts or has no spades.
 
 Note that it does not take the following into consideration:
 1. Whether Partner can overtrump a trumped card
