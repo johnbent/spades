@@ -78,6 +78,10 @@ def can_king_be_trumped(hands):
 def can_queen_be_trumped(hands):
   return can_honor_be_trumped(hands,2)
 
+# looks at the opponents hands, if either has only three hearts and at least one spade, returns true
+def can_jack_be_trumped(hands):
+  return can_honor_be_trumped(hands,3)
+
 # takes a list of cards and prints them in hex format
 def hex_cards(cards):
   cards = sorted(cards)
@@ -119,16 +123,29 @@ class Simulations:
     self.aces_trumped=0
     self.kings_trumped=0
     self.queens_trumped=0
+    self.jacks_trumped=0
 
-  def add_simulations(self,i,a,k,q):
+  def add_simulations(self,i,a,k,q,j):
     self.iterations += i
     self.aces_trumped += a
     self.kings_trumped += k
     self.queens_trumped += q
+    self.jacks_trumped += j
+
+  def get_iterations(self):
+    return self.iterations
+
+  def percent(self,trumps):
+    if trumps == 0:
+      return "   --   " 
+    else:
+      div=trumps/self.iterations*100
+      return "%6.2f %%" % div 
 
   def __str__(self):
-    return "Dealt %2d hearts %d times. Aces can be trumped %6.2f%% of the time. Kings %6.2f%%. Queens %6.2f%%" % \
-      (self.num_hearts, self.iterations, self.aces_trumped/self.iterations*100, self.kings_trumped/self.iterations*100, self.queens_trumped/self.iterations*100)
+    return "Dealt %2d hearts. Aces can be trumped %s of the time. Kings %s Queens %s Jacks %s" % \
+      (self.num_hearts, self.percent(self.aces_trumped), self.percent(self.kings_trumped), 
+      self.percent(self.queens_trumped), self.percent(self.jacks_trumped))
 
 def simulate(args):
   # create a data structure to record the data so we can use pickle and collect increasingly more samples
@@ -142,11 +159,19 @@ def simulate(args):
   except FileNotFoundError:
     pass
 
+  if args.show_only:
+    print("Ran %d iterations:" % simulations[1].get_iterations())
+    for hearts in range(1,14):
+      print(simulations[hearts])
+    sys.exit(0)
+
   iterations=args.iterations
+  print("Running %d iterations and combining with %d previously run:" % (iterations, simulations[1].get_iterations() ))
   for hearts in range(1,14):
     aces_trumped=0
     kings_trumped=0
     queens_trumped=0
+    jacks_trumped=0
     for j in range(0,iterations):
       hands=shuffle(hearts)
       if args.verbose:
@@ -156,7 +181,9 @@ def simulate(args):
         kings_trumped += can_king_be_trumped(hands)
       if hearts > 2:
         queens_trumped += can_queen_be_trumped(hands)
-    simulations[hearts].add_simulations(iterations,aces_trumped,kings_trumped,queens_trumped)
+      if hearts > 3:
+        jacks_trumped += can_jack_be_trumped(hands)
+    simulations[hearts].add_simulations(iterations,aces_trumped,kings_trumped,queens_trumped,jacks_trumped)
     print(simulations[hearts])
 
   # save the data structure to a pickle
@@ -166,6 +193,7 @@ def main():
   parser = argparse.ArgumentParser(description='Compute probabilities in spades.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument('-v', '--verbose', action='store_true', default=False)
   parser.add_argument('-i', '--iterations', action='store', type=int, default=1000)
+  parser.add_argument('-s', '--show_only', action='store_true', default=False)
   args = parser.parse_args()
 
   simulate(args)
