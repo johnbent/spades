@@ -241,8 +241,33 @@ def is_nil_covered(hands,args):
     return card
 
   # for my heart, what card does opp play?
-  def opp_card(ohand,my_heart):
-    pass
+  # if opp can go lower, opp will do so with highest possible card
+  # if opp must cover, opp will do so with highest possible card
+  def opp_card(ohand,who,my_heart):
+    card=None
+    o_hearts=sorted(get_cards(ohand,first_hear))
+    if len(o_hearts)>0:
+      card=o_hearts[0] # use opp's lowest heart unless he has a covering one
+      for c in o_hearts[1:]:
+        if c < my_heart:
+          card = c
+        else:
+          break
+      if card > my_heart: # whoops, opp must cover
+        card = o_hearts[-1]  # if so, use the highest cover
+    else:
+      o_club=get_cards(ohand, first_club)
+      if len(o_club) > 0:
+        card=o_club[0]
+      else:
+        o_diam=get_cards(ohand, first_diam)
+        if len(o_diam) > 0:
+          card=o_diam[0]
+        else:
+          o_spad=get_cards(ohand, first_spad)
+          card=o_spad[0] # if no hearts and no diamonds and no clubs, then there must be only spades.
+    ohand.remove(card) # remove it so it can't be used again
+    return card
 
   # variables used throughout
   my_hearts=get_hearts(ME,hands)
@@ -266,16 +291,24 @@ def is_nil_covered(hands,args):
       (cards_to_string(my_hearts), cards_to_string(p_hearts), cards_to_string(w_hearts), cards_to_string(e_hearts), len(p_spades))
     debug="I have %s hearts, p has %s hearts, p has %s spades." % \
       (cards_to_string(my_hearts), cards_to_string(p_hearts), len(p_spades) if len(p_spades) <= 1 else "2+")
+    print_hands(hands)
 
   # for each heart that I have starting with my lowest one
   for h in my_hearts:
     pcard = p_card(hands[P],h)
-    if verbose_debug:
-      print("P is attempting to cover my %s with %s" % (human_name(h),human_name(pcard)))
+    ecard = opp_card(hands[E],E,h)
+    wcard = opp_card(hands[W],W,h)
+    if args.verbose:
+      print("My %s , P %s, E %s, W %s" % (human_name(h),human_name(pcard),human_name(ecard),human_name(wcard)))
     if (is_suit(pcard,first_hear) and pcard > h) or is_suit(pcard,first_spad):
       covered=True
     else:
       covered=False
+    if covered is False and args.force: # p couldn't cover. Consider whether opps were forced to
+      if is_suit(ecard,first_spad) or is_suit(wcard,first_spad):
+        covered=True
+      if (is_suit(ecard,first_hear) and ecard > h) or (is_suit(wcard,first_hear) and wcard > h):
+        covered=True
     if not covered:
       break
   if args.verbose or verbose_debug:
@@ -301,9 +334,13 @@ def simulate_nil(args):
 
   simulations=Nil_Simulations()
 
+  pfile="spades_nil.pickle"
+  if args.force:
+    pfile="spades_nil_force.pickle"
+
   # try to load a previously created pickle file 
   try:
-    simulations = pickle.load( open( "spades_nil.pickle", "rb" ) )
+    simulations = pickle.load( open( pfile, "rb" ) )
   except FileNotFoundError:
     pass
 
@@ -334,7 +371,7 @@ def simulate_nil(args):
     simulations.print_simulations(cards_to_string(cards))
 
     # save the data structure to a pickle (do it every loop to just make sure we save something if we are killed early)
-    pickle.dump( simulations, open( "spades_nil.pickle", "wb" ) ) 
+    pickle.dump( simulations, open( pfile, "wb" ) ) 
 
 
 def simulate(args):
@@ -395,6 +432,7 @@ def main():
   parser.add_argument('-s', '--show_only', action='store_true', default=False)
   parser.add_argument('-n', '--nil', action='store_true', default=False)
   parser.add_argument('-o', '--only', action='store', default=None)
+  parser.add_argument('-f', '--force', action='store_true', default=False, help="Consider whether opps are forced to cover nil.")
   args = parser.parse_args()
 
   if args.nil:
