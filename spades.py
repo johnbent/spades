@@ -171,6 +171,13 @@ class Nil_Simulations:
     self.combos[combo]['iters']+=iters
     self.combos[combo]['covers']+=covers
 
+  def get_iterations(self,combo):
+    try:
+      C=self.combos[combo]  
+      return C['iters']  
+    except KeyError:
+      return 0
+
   def print_simulations(self,combo):
     C=self.combos[combo]  # save some typing below
     print("%d iters, %s is covered %.4f %%" % \
@@ -318,19 +325,15 @@ def is_nil_covered(hands,args):
   return covered 
 
 """
-TODO:
-Play hearts from Nil in ascending order.
-Right now it is doing them in descending order and it's causing this bug:
+Old bug: was doing them in descending order and it caused this bug:
 If Nil has JH,KH and P has only QH, then Nil will bust in my logic.
 If Nil has JH,QH and P has only KH, then Nil will not bust in my logic.
-But, instead, these should have identical probabilities
-Also, add opps being forced to cover.
+Fixed bug. Current logic:
 For each heart in ascending order:
 1. P covers with the lowest heart that allows the cover
 2. Opps slough the highest card that goes under
 """
 def simulate_nil(args):
-  iters = args.iterations
 
   simulations=Nil_Simulations()
 
@@ -344,31 +347,44 @@ def simulate_nil(args):
   except FileNotFoundError:
     pass
 
-  # get all possible pairs from hearts
+  # get all possible pairs from hearts excluding the two
   hear=get_suit(first_hear)
   hear.remove(first_hear) # don't bother simulating with the two
   combos = [(a, b) for idx, a in enumerate(hear) for b in hear[idx + 1:]]
+
   # now add all the singletons
-  for h in hear:
-    combos.append((h,))
+  combos += [(x,) for x in hear]
+
+  # then get all the KXX and all the AXX
+  hear=get_suit(first_hear) 
+  ace=hear[-1]
+  king=hear[-2]
+  hear.remove(ace)
+  new_combos = [(a, b, ace) for idx, a in enumerate(hear) for b in hear[idx + 1:]]
+  combos += new_combos
+  hear.remove(king)
+  new_combos = [(a, b, king) for idx, a in enumerate(hear) for b in hear[idx + 1:]]
+  combos += new_combos
+
   if args.verbose:
     print(combos)
 
   for cards in combos:
+    cstr = cards_to_string(cards)
     if args.only:
-      cstr = cards_to_string(cards)
       if cstr != args.only:
         if args.verbose:
           print("Skipping %s (only simulating %s" % (cstr, args.only))
         continue
     covers=0
     if not args.show_only:
+      iters = max(args.iterations - simulations.get_iterations(cstr),0) # don't run more iterations if enough already exist
       for i in range(0,iters):
         hands=shuffle(num_hearts=0,num_spades=0,specific_hearts=cards)
         if is_nil_covered(hands,args):
           covers+=1
-      simulations.add_simulations(cards_to_string(cards),iters,covers)
-    simulations.print_simulations(cards_to_string(cards))
+      simulations.add_simulations(cstr,iters,covers)
+    simulations.print_simulations(cstr)
 
     # save the data structure to a pickle (do it every loop to just make sure we save something if we are killed early)
     pickle.dump( simulations, open( pfile, "wb" ) ) 
@@ -431,7 +447,7 @@ def main():
   parser.add_argument('-i', '--iterations', action='store', type=int, default=1000)
   parser.add_argument('-s', '--show_only', action='store_true', default=False)
   parser.add_argument('-n', '--nil', action='store_true', default=False)
-  parser.add_argument('-o', '--only', action='store', default=None)
+  parser.add_argument('-o', '--only', action='store', default=None, help="Only run nil simulations for a particular combo")
   parser.add_argument('-f', '--force', action='store_true', default=False, help="Consider whether opps are forced to cover nil.")
   args = parser.parse_args()
 
